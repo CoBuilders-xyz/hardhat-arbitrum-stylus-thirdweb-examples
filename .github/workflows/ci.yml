@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify test files (assertModuleInterface needs getPublicClient)
+        run: node scripts/check-test-public-client.mjs
+
       - name: Install Rust toolchains
         run: |
           rustup toolchain install 1.88.0 1.87.0

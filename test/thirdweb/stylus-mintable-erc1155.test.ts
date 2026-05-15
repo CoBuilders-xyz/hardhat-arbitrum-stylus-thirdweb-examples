@@ -14,6 +14,7 @@ const CONTRACT = 'stylus-mintable-erc1155';
 
 describe('thirdweb / stylus-mintable-erc1155', async function () {
   const { stylusViem } = await network.create();
+  const publicClient = await stylusViem.getPublicClient();
   const [wallet] = await stylusViem.getWalletClients();
 
   const contract = await stylusViem.deployContract(CONTRACT);
