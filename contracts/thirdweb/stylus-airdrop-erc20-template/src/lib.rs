@@ -1,0 +1,395 @@
+//! this contract is not audited
+
+#![cfg_attr(not(any(feature = "export-abi", test)), no_main)]
+extern crate alloc;
+
+use alloc::vec::Vec;
+use alloy_primitives::{b256, U64};
+use alloy_sol_types::sol;
+use stylus_sdk::{
+    alloy_primitives::{Address, B256, U256}, call::RawCall, crypto, prelude::*
+};
+
+// Compact error handling
+#[derive(SolidityError)]
+pub enum AirdropErrors {
+    AirdropError(AirdropError),
+}
+
+// Error codes for compact error handling
+pub const ERROR_LENGTH_MISMATCH: u8 = 1;
+pub const ERROR_NO_MERKLE_ROOT: u8 = 2;
+pub const ERROR_INVALID_PROOF: u8 = 3;
+pub const ERROR_ALREADY_CLAIMED: u8 = 4;
+pub const ERROR_REQUEST_EXPIRED: u8 = 5;
+pub const ERROR_UID_ALREADY_USED: u8 = 6;
+pub const ERROR_INVALID_SIGNATURE: u8 = 7;
+pub const ERROR_NOT_OWNER: u8 = 8;
+
+sol_interface! {
+    interface IERC20 {
+        function transferFrom(address from, address to, uint256 value) external returns (bool);
+    }
+}
+
+sol! {
+
+    struct AirdropContentERC20 {
+        address recipient;
+        uint256 amount;
+    }
+
+    struct AirdropRequestERC20 {
+        bytes32 uid;
+        address tokenAddress;
+        uint256 expirationTimestamp;
+        AirdropContentERC20[] contents;
+    }
+
+    event AirdropExecuted(address indexed token, address indexed sender, uint256 count);
+    event AirdropClaimed(address indexed token, address indexed receiver, uint256 amount);
+    event AirdropExecutedWithSignature(address indexed token, address indexed signer, bytes32 uid, uint256 count);
+    event MerkleRootSet(address indexed token, bytes32 merkleRoot);
+
+    // Compact error codes
+    error AirdropError(uint8 code);
+}
+
+sol_storage! {
+    #[entrypoint]
+    pub struct StylusAirdropERC20 {
+        address owner;
+
+        mapping(address => uint64) tokenConditionId;
+        mapping(address => bytes32) tokenMerkleRoot;
+        mapping(bytes32 => bool) claimed; 
+
+        mapping(bytes32  => bool) processed; 
+    }
+}
+
+// keccak256("AirdropContentERC20(address recipient,uint256 amount)")
+const CONTENT_TYPEHASH_ERC20:  B256 =
+b256!("f6c72d100e33735bf51e80c28612aa8502ae41efe0a50e53461ab22ae8aa6def");
+
+// keccak256("AirdropRequestERC20(bytes32 uid,address tokenAddress,uint256 expirationTimestamp,AirdropContentERC20[] contents)AirdropContentERC20(address recipient,uint256 amount)")
+const REQUEST_TYPEHASH_ERC20:  B256 =
+ b256!("32847426538f79017eb3c162a7d70952a635f4a2b0cf164b45d6399e76e2b4d3");
+
+const EIP712_DOMAIN_TYPEHASH: B256 =
+ b256!("8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f");
+
+#[public]
+impl StylusAirdropERC20 {
+    #[constructor]
+    pub fn constructor(&mut self, owner: Address) {
+        let _ = self.owner.set(owner);
+    }
+
+    #[selector(name = "airdropERC20")]
+    pub fn airdrop_erc20(
+        &mut self,
+        token:      Address,
+        contents: Vec<(Address, U256)>,
+    ) -> Result<(), AirdropErrors> {
+
+        let erc20 = IERC20::from(token);
+        let sender = self.vm().msg_sender();
+
+        for (recipient, amount) in &contents {
+            let config = Call::new_mutating(self);
+            erc20
+                .transfer_from(self.vm(), config, sender, *recipient, *amount)
+                .expect("fail");
+        }
+
+        self.vm().log(AirdropExecuted {
+            token,
+            sender,
+            count: U256::from(contents.len()),
+        });
+        Ok(())
+    }
+
+    #[payable]
+    #[selector(name = "claimERC20")]
+    pub fn claim_erc20(
+        &mut self,
+        token:   Address,
+        receiver: Address,
+        amount:  U256,
+        proofs:  Vec<B256>,
+    ) -> Result<(), AirdropErrors> {
+        // 1. root must exist
+        let root = self.tokenMerkleRoot.get(token);
+        if root == B256::ZERO {
+            return Err(AirdropErrors::AirdropError(AirdropError { code: ERROR_NO_MERKLE_ROOT }));
+        }
+
+        // 2. validate proof of (receiver, amount)
+        let leaf = crypto::keccak(&(encode_pair(receiver, amount)));
+        if !verify_proof(&proofs, root, leaf) {
+            return Err(AirdropErrors::AirdropError(AirdropError { code: ERROR_INVALID_PROOF }));
+        }
+
+        // 3. check claim not already used
+        let round  = self.tokenConditionId.get(token);
+        let round_u64: u64 = round.to::<u64>();
+        let key    = crypto::keccak(&encode_claim_key(round_u64, receiver, token));
+        if self.claimed.get(key) {
+            return Err(AirdropErrors::AirdropError(AirdropError { code: ERROR_ALREADY_CLAIMED }));
+        }
+        self.claimed.insert(key, true);
+
+        // 4. transfer
+        let erc20 = IERC20::from(token);
+        let config = Call::new_mutating(self);
+        let owner = self.owner.get();
+        erc20
+            .transfer_from(self.vm(), config, owner, receiver, amount)
+            .expect("fail");
+
+        self.vm().log(AirdropClaimed {
+            token,
+            receiver,
+            amount,
+        });
+        Ok(())
+    }
+
+    #[payable]
+    #[selector(name = "airdropERC20WithSignature")]
+    pub fn airdrop_erc20_with_signature(
+        &mut self,
+        req: (B256, Address, U256, Vec<(Address, U256)>),
+        signature: [u8; 65],
+    ) -> Result<(), AirdropErrors> {
+        // 1. Convert tuple to struct for easier access
+        let contents: Vec<AirdropContentERC20> = req.3.iter().map(|(recipient, amount)| {
+            AirdropContentERC20 {
+                recipient: *recipient,
+                amount: *amount,
+            }
+        }).collect();
+
+        let request = AirdropRequestERC20 {
+            uid: req.0,
+            tokenAddress: req.1,
+            expirationTimestamp: req.2,
+            contents,
+        };
+
+        // 2. checks
+        let expiry = request.expirationTimestamp; 
+        let now = U256::from(self.vm().block_timestamp());
+        if now > expiry {
+            return Err(AirdropErrors::AirdropError(AirdropError { code: ERROR_REQUEST_EXPIRED }));
+        }
+
+        let uid_used = self.processed.get(request.uid);
+        if uid_used {
+            return Err(AirdropErrors::AirdropError(AirdropError { code: ERROR_UID_ALREADY_USED }));
+        }
+
+        let owner = self.owner.get();
+        if !self.is_valid_sig(&request, &signature, owner) {
+            return Err(AirdropErrors::AirdropError(AirdropError { code: ERROR_INVALID_SIGNATURE }));
+        }
+
+        // 3. mark uid as processed
+        self.processed.insert(request.uid, true);
+
+        // 4. transfer
+        let erc20 = IERC20::from(request.tokenAddress);
+
+        for c in &request.contents {
+            let config = Call::new_mutating(self);
+            erc20
+                .transfer_from(self.vm(), config, owner, c.recipient, c.amount)
+                .expect("fail"); // transfer failed
+        }
+
+        self.vm().log(AirdropExecutedWithSignature {
+            token: request.tokenAddress,
+            signer: owner,
+            uid: request.uid,
+            count: U256::from(request.contents.len()),
+        });
+        Ok(())
+    }
+
+    pub fn set_merkle_root(
+        &mut self,
+        token: Address,
+        token_merkle_root:  B256,
+        reset_claim_status: bool,
+    ) -> Result<(), AirdropErrors> {
+        self.only_owner()?;
+
+        if reset_claim_status || self.tokenConditionId.get(token) == U64::from(0) {
+            let next = self.tokenConditionId.get(token) + U64::from(1u8);
+            self.tokenConditionId.insert(token, next);
+        }
+
+        self.tokenMerkleRoot.insert(token, token_merkle_root);
+
+        self.vm().log(MerkleRootSet {
+            token,
+            merkleRoot: token_merkle_root,
+        });
+        Ok(())
+    }
+
+    pub fn owner_addr(&self) -> Address { self.owner.get() }
+
+    pub fn domain_separator(&self) -> B256 {
+        let name_hash    = crypto::keccak(b"Airdrop");
+        let version_hash = crypto::keccak(b"1");
+        let chain_bytes: [u8; 32] = U256::from(self.vm().chain_id()).to_be_bytes::<32>();
+        let verifying_word: [u8; 32] = address_word(&self.vm().contract_address());
+
+        crypto::keccak(&[
+            &EIP712_DOMAIN_TYPEHASH[..],
+            &name_hash[..],
+            &version_hash[..],
+            &chain_bytes[..],
+            &verifying_word[..],
+        ].concat())
+    }
+}
+
+impl StylusAirdropERC20 {
+    #[inline(always)]
+    fn only_owner(&self) -> Result<(), AirdropErrors> {
+        if self.vm().msg_sender() != self.owner.get() {
+            return Err(AirdropErrors::AirdropError(AirdropError { code: ERROR_NOT_OWNER }));
+        }
+
+        Ok(())
+    }
+
+    fn is_valid_sig(&self, req: &AirdropRequestERC20, sig: &[u8; 65], owner: Address) -> bool {
+        let content_hash = hash_content(&req.contents);
+        let struct_hash  = hash_request(req, content_hash);
+
+        let digest = crypto::keccak(&[
+            b"\x19\x01",
+            &self.domain_separator()[..],
+            &struct_hash[..],
+        ].concat());
+
+        match ecrecover(digest, sig, &*self.vm()) {
+            Some(addr) => addr == owner,
+            None => false,
+        }
+    }
+}
+
+fn verify_proof(proof: &[B256], root: B256, mut hash: B256) -> bool {
+    for p in proof {
+        hash = if hash <= *p {
+            crypto::keccak(&[hash.as_slice(), p.as_slice()].concat())
+        } else {
+            crypto::keccak(&[p.as_slice(), hash.as_slice()].concat())
+        };
+    }
+    hash == root
+}
+
+/// abi.encodePacked(receiver, amount)
+fn encode_pair(receiver: Address, amount: U256) -> [u8; 52] {
+    let mut out = [0u8; 52];
+    out[..20].copy_from_slice(receiver.as_slice());
+
+    let amt_bytes: [u8; 32] = amount.to_be_bytes::<32>();
+    out[20..].copy_from_slice(&amt_bytes);
+
+    out
+}
+
+/// abi.encodePacked(round, receiver, token)
+fn encode_claim_key(round: u64, receiver: Address, token: Address) -> [u8; 48] {
+    let mut out = [0u8; 48];
+    out[..8].copy_from_slice(&round.to_be_bytes());
+    out[8..28].copy_from_slice(receiver.as_slice());
+    out[28..48].copy_from_slice(token.as_slice());
+    out
+}
+
+fn address_word(addr: &Address) -> [u8; 32] {
+    let mut out = [0u8; 32];
+    out[12..].copy_from_slice(addr.as_slice()); // right-align 20 bytes
+    out
+}
+
+fn hash_content(contents: &[AirdropContentERC20]) -> B256 {
+    let mut buf = Vec::with_capacity(32 * contents.len());
+
+    for c in contents {
+        let leaf = crypto::keccak(
+            &[
+                CONTENT_TYPEHASH_ERC20.as_slice(),
+                address_word(&c.recipient).as_slice(),
+                c.amount.to_be_bytes::<32>().as_slice(),
+            ]
+            .concat(),
+        );
+        buf.extend_from_slice(
+            &leaf.as_slice()[..]
+        );
+    }
+    crypto::keccak(&buf)
+}
+
+fn hash_request(req: &AirdropRequestERC20, contents_hash: B256) -> B256 {
+    let token_word = address_word(&req.tokenAddress);
+
+    crypto::keccak(&[
+        &REQUEST_TYPEHASH_ERC20[..],
+        &req.uid[..],
+        &token_word[..],
+        &req.expirationTimestamp.to_be_bytes::<32>()[..],
+        &contents_hash[..],
+    ].concat())
+}
+
+// secp256k1n / 2 — signatures with s > this value are rejected per EIP-2
+const SECP256K1N_HALF: U256 = U256::from_limbs([
+    0xBFD25E8CD0364140,
+    0xBAAEDCE6AF48A03B,
+    0xFFFFFFFFFFFFFFFE,
+    0x7FFFFFFFFFFFFFFF,
+]);
+
+fn ecrecover(digest: B256, sig: &[u8; 65], host: &dyn stylus_sdk::prelude::Host) -> Option<Address> {
+    let (r, s, v) = (&sig[0..32], &sig[32..64], sig[64]);
+
+    if v != 27 && v != 28 { return None }
+
+    // EIP-2: reject high-S signatures to prevent malleability
+    let s_val = U256::from_be_slice(s);
+    if s_val > SECP256K1N_HALF { return None }
+
+    let mut input = [0u8; 128];
+    input[..32].copy_from_slice(&digest.as_slice());
+    input[63] = v;
+    input[64..96].copy_from_slice(r);
+    input[96..128].copy_from_slice(s);
+
+    let precompile_addr = {
+        let mut bytes = [0u8; 20];
+        bytes[19] = 1; // ecrecover addr
+        Address::from(bytes)
+    };
+    let out = unsafe {
+        RawCall::new(host)
+            .gas(25_000)
+            .call(precompile_addr,
+                  &input)
+    }
+    .ok()?;
+
+    if out.len() < 32 { return None }
+    let addr = Address::from_slice(&out[12..32]);
+    if addr == Address::ZERO { None } else { Some(addr) }
+}
