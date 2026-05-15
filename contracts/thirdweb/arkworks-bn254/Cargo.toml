@@ -1,0 +1,49 @@
+[package]
+name = "arkworks-bn254"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+keywords = ["arkworks", "bn254", "elliptic-curve", "stylus", "arbitrum"]
+categories = ["cryptography", "no-std"]
+
+[dependencies]
+alloy-primitives = { version = "=0.8.20", default-features = false, features = ["tiny-keccak"] }
+mini-alloc = "1.0.0"
+stylus-sdk = "=0.9.0"
+
+# Arkworks dependencies for BN254 curve operations
+ark-bn254 = { version = "0.4", default-features = false, features = ["curve", "std"] }
+ark-ec = { version = "0.4", default-features = false }
+ark-ff = { version = "0.4", default-features = false }
+ark-serialize = { version = "0.4", default-features = false }
+ark-std = { version = "0.4", default-features = false }
+
+[dev-dependencies]
+motsu = "=0.10.0"
+alloy-primitives = { version = "=0.8.20", features = ["arbitrary"] }
+arbitrary = { version = "1.4", features = ["derive"] }
+hex-literal = "0.4"
+
+[features]
+default = []
+nft = []
+verifier = []
+vkeys = []
+export-abi = ["stylus-sdk/export-abi"]
+debug = ["stylus-sdk/debug"]
+
+[[bin]]
+name = "arkworks-bn254"
+path = "src/main.rs"
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[profile.release]
+codegen-units = 1
+strip = true
+lto = true
+panic = "abort"
+
+opt-level = "z"
+
