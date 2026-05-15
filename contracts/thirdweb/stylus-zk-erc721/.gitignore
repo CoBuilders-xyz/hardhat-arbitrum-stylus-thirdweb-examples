@@ -46,7 +46,7 @@ circuits/build/
 circuits/powersOfTau28_hez_final_14.ptau
 
 # Generated contract files (created by setup script) - NOTE: verifying_key.rs stub is committed
-contracts/src/verifying_key.rs
+# verifying_key.rs is committed (copy of stub) for plugin compile without setup.sh
 
 # App build artifacts
 app/.next/

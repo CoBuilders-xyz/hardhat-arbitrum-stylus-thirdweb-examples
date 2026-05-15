@@ -1,62 +1,62 @@
 # hardhat-arbitrum-stylus-tests
 
-Integration testbed for [@cobuilders/hardhat-arbitrum-stylus](https://www.npmjs.com/package/@cobuilders/hardhat-arbitrum-stylus) on **Hardhat 3**. We vendor real-world Stylus projects (grouped by provider under `contracts/`) and exercise compile, deploy, and on-chain behavior through `stylusViem`.
-
 ## Prerequisites
 
 - Node.js 22+
-- [Rust](https://rustup.rs/) with `wasm32-unknown-unknown` (matching each contract's `rust-toolchain.toml`, currently **1.88.0**)
-- [`cargo-stylus`](https://github.com/OffchainLabs/cargo-stylus) on your PATH
-- Docker (only for the ephemeral Arbitrum node during tests — compile/deploy use the **host** toolchain)
-
-## Layout
-
-```
-contracts/thirdweb/     # Vendored thirdweb-example Stylus repos
-test/thirdweb/          # node:test suites (one deploy per suite, shared instance)
-test/thirdweb/helpers.ts
-```
-
-## Workflow
-
-Each thirdweb suite:
-
-1. Spins up a temporary Arbitrum nitro node (`network.connect()`).
-2. **Deploys once** in `before()` via `stylusViem.deployContract` (host toolchain, no deploy container).
-3. Runs read/write tests against that deployment.
-
-Compile and manual deploy also default to `--host` in `hardhat.config.ts` (`stylus.compile.useHostToolchain` / `stylus.deploy.useHostToolchain`).
+- Rust + `wasm32-unknown-unknown` (see each contract `rust-toolchain.toml`)
+- `cargo-stylus` on PATH
+- Docker (ephemeral nitro node during tests)
 
 ## Scripts
 
-| Script                   | Description                                    |
-| ------------------------ | ---------------------------------------------- |
-| `npm run compile`        | Compile all Stylus contracts (host)            |
-| `npm run compile:erc20`  | Compile `stylus-mintable-erc20` only           |
-| `npm run compile:erc721` | Compile `stylus-mintable-erc721` only          |
-| `npm run deploy:erc20`   | Deploy ERC-20 module to ephemeral node (host)  |
-| `npm run deploy:erc721`  | Deploy ERC-721 module to ephemeral node (host) |
-| `npm run test`           | Run all tests                                  |
-| `npm run test:thirdweb`  | Run all thirdweb integration suites            |
-| `npm run test:erc20`     | ERC-20 module suite only                       |
-| `npm run test:erc721`    | ERC-721 module suite only                      |
+| Script                                 | Description                           |
+| -------------------------------------- | ------------------------------------- |
+| `npm run compile`                      | Compile all Stylus contracts (host)   |
+| `npm run compile:erc20`                | Compile `stylus-mintable-erc20`       |
+| `npm run compile:erc721`               | Compile `stylus-mintable-erc721`      |
+| `npm run compile:erc1155`              | Compile `stylus-mintable-erc1155`     |
+| `npm run compile:transferable-erc20`   | Compile `stylus-transferable-erc20`   |
+| `npm run compile:transferable-erc721`  | Compile `stylus-transferable-erc721`  |
+| `npm run compile:transferable-erc1155` | Compile `stylus-transferable-erc1155` |
+| `npm run compile:stylus-erc20`         | Compile `stylus-erc20` template       |
+| `npm run compile:stylus-erc721`        | Compile `stylus-erc721` template      |
+| `npm run compile:stylus-erc1155`       | Compile `stylus-erc1155` template     |
+| `npm run compile:airdrop-erc20`        | Compile `stylus-airdrop-erc20`        |
+| `npm run compile:arkworks-bn254`       | Compile `arkworks-bn254`              |
+| `npm run compile:zk-erc20`             | Compile `stylus-zk-erc20`             |
+| `npm run compile:zk-erc721`            | Compile `stylus-zk-erc721`            |
+| `npm run deploy:erc20`                 | Deploy `stylus-mintable-erc20`        |
+| `npm run deploy:erc721`                | Deploy `stylus-mintable-erc721`       |
+| `npm run deploy:erc1155`               | Deploy `stylus-mintable-erc1155`      |
+| `npm run deploy:transferable-erc20`    | Deploy `stylus-transferable-erc20`    |
+| `npm run deploy:transferable-erc721`   | Deploy `stylus-transferable-erc721`   |
+| `npm run deploy:transferable-erc1155`  | Deploy `stylus-transferable-erc1155`  |
+| `npm run deploy:stylus-erc20`          | Deploy `stylus-erc20`                 |
+| `npm run deploy:stylus-erc721`         | Deploy `stylus-erc721`                |
+| `npm run deploy:stylus-erc1155`        | Deploy `stylus-erc1155`               |
+| `npm run deploy:airdrop-erc20`         | Deploy `stylus-airdrop-erc20`         |
+| `npm run deploy:arkworks-bn254`        | Deploy `arkworks-bn254`               |
+| `npm run deploy:zk-erc20`              | Deploy `stylus-zk-erc20`              |
+| `npm run deploy:zk-erc721`             | Deploy `stylus-zk-erc721`             |
+| `npm run test`                         | Run all Hardhat tests                 |
+| `npm run test:thirdweb`                | Run all thirdweb suites (sequential)  |
+| `npm run test:erc20`                   | Test `stylus-mintable-erc20`          |
+| `npm run test:erc721`                  | Test `stylus-mintable-erc721`         |
+| `npm run test:erc1155`                 | Test `stylus-mintable-erc1155`        |
+| `npm run test:transferable-erc20`      | Test `stylus-transferable-erc20`      |
+| `npm run test:transferable-erc721`     | Test `stylus-transferable-erc721`     |
+| `npm run test:transferable-erc1155`    | Test `stylus-transferable-erc1155`    |
+| `npm run test:stylus-erc20`            | Test `stylus-erc20` template          |
+| `npm run test:stylus-erc721`           | Test `stylus-erc721` template         |
+| `npm run test:stylus-erc1155`          | Test `stylus-erc1155` template        |
+| `npm run test:airdrop-erc20`           | Test `stylus-airdrop-erc20`           |
+| `npm run test:arkworks-bn254`          | Test `arkworks-bn254`                 |
+| `npm run test:zk-erc20`                | Test `stylus-zk-erc20`                |
+| `npm run test:zk-erc721`               | Test `stylus-zk-erc721`               |
 
-## Examples
+## Example
 
 ```shell
-# First time (or after pulling new contracts)
 npm run compile:erc20
 npm run test:erc20
-
-# Manual deploy smoke check
-npm run deploy:erc721
 ```
-
-## Vendored contracts
-
-See [contracts/thirdweb/README.md](./contracts/thirdweb/README.md) for the list of thirdweb-example sources and upstream links.
-
-## Notes
-
-- `getModuleConfig()` returns nested structs; the exported artifact ABI is incomplete for viem, so tests decode it via an explicit tuple ABI in `test/thirdweb/helpers.ts`.
-- Test runtime is dominated by a single Stylus deploy per file (~1–2 min with host toolchain vs ~10 min when redeploying per test with Docker).
