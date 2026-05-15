@@ -14,6 +14,7 @@ const CONTRACT = 'stylus-mintable-erc721';
 
 describe('thirdweb / stylus-mintable-erc721', async function () {
   const { stylusViem } = await network.create();
+  const publicClient = await stylusViem.getPublicClient();
   const [wallet] = await stylusViem.getWalletClients();
 
   const contract = await stylusViem.deployContract(CONTRACT);
@@ -27,7 +28,7 @@ describe('thirdweb / stylus-mintable-erc721', async function () {
   });
 
   it('returns ERC-721 module metadata from artifact ABI', async function () {
-    await assertModuleInterface(contract, ERC721_INTERFACE_ID);
+    await assertModuleInterface(publicClient, contract, ERC721_INTERFACE_ID);
   });
 
   it('exposes uninstall encoding and minter role checks', async function () {

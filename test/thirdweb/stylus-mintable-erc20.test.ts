@@ -14,6 +14,7 @@ const CONTRACT = 'stylus-mintable-erc20';
 
 describe('thirdweb / stylus-mintable-erc20', async function () {
   const { stylusViem } = await network.create();
+  const publicClient = await stylusViem.getPublicClient();
   const [wallet] = await stylusViem.getWalletClients();
 
   const contract = await stylusViem.deployContract(CONTRACT);
@@ -27,7 +28,7 @@ describe('thirdweb / stylus-mintable-erc20', async function () {
   });
 
   it('returns ERC-20 module metadata from artifact ABI', async function () {
-    await assertModuleInterface(contract, ERC20_INTERFACE_ID);
+    await assertModuleInterface(publicClient, contract, ERC20_INTERFACE_ID);
   });
 
   it('exposes uninstall encoding and minter role checks', async function () {

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "compile": "hardhat arb:compile --stylus --host",
+    "compile:ci": "hardhat arb:compile --stylus --host --contracts stylus-mintable-erc20,stylus-mintable-erc721,stylus-mintable-erc1155,stylus-transferable-erc20,stylus-transferable-erc721,stylus-transferable-erc1155,stylus-erc20,stylus-erc721,stylus-erc1155,stylus-airdrop-erc20,arkworks-bn254,stylus-zk-erc20,stylus-zk-erc721",
     "compile:erc20": "hardhat arb:compile --stylus --host --contracts stylus-mintable-erc20",
     "compile:erc721": "hardhat arb:compile --stylus --host --contracts stylus-mintable-erc721",
     "compile:erc1155": "hardhat arb:compile --stylus --host --contracts stylus-mintable-erc1155",
@@ -32,7 +33,7 @@
     "deploy:zk-erc20": "hardhat arb:deploy --host stylus-zk-erc20",
     "deploy:zk-erc721": "hardhat arb:deploy --host stylus-zk-erc721",
     "test": "npm run test:all",
-    "test:all": "hardhat test test/thirdweb/stylus-mintable-erc20.test.ts && hardhat test test/thirdweb/stylus-mintable-erc721.test.ts && hardhat test test/thirdweb/stylus-mintable-erc1155.test.ts && hardhat test test/thirdweb/stylus-transferable-erc20.test.ts && hardhat test test/thirdweb/stylus-transferable-erc721.test.ts && hardhat test test/thirdweb/stylus-transferable-erc1155.test.ts && hardhat test test/thirdweb/stylus-erc20.test.ts && hardhat test test/thirdweb/stylus-erc721.test.ts && hardhat test test/thirdweb/stylus-erc1155.test.ts && hardhat test test/thirdweb/stylus-airdrop-erc20.test.ts && hardhat test test/thirdweb/arkworks-bn254.test.ts && hardhat test test/thirdweb/stylus-zk-erc20.test.ts && hardhat test test/thirdweb/stylus-zk-erc721.test.ts",
+    "test:all": "node scripts/check-test-public-client.mjs && hardhat test test/thirdweb/stylus-mintable-erc20.test.ts && hardhat test test/thirdweb/stylus-mintable-erc721.test.ts && hardhat test test/thirdweb/stylus-mintable-erc1155.test.ts && hardhat test test/thirdweb/stylus-transferable-erc20.test.ts && hardhat test test/thirdweb/stylus-transferable-erc721.test.ts && hardhat test test/thirdweb/stylus-transferable-erc1155.test.ts && hardhat test test/thirdweb/stylus-erc20.test.ts && hardhat test test/thirdweb/stylus-erc721.test.ts && hardhat test test/thirdweb/stylus-erc1155.test.ts && hardhat test test/thirdweb/stylus-airdrop-erc20.test.ts && hardhat test test/thirdweb/arkworks-bn254.test.ts && hardhat test test/thirdweb/stylus-zk-erc20.test.ts && hardhat test test/thirdweb/stylus-zk-erc721.test.ts",
     "test:erc20": "hardhat test test/thirdweb/stylus-mintable-erc20.test.ts",
     "test:erc721": "hardhat test test/thirdweb/stylus-mintable-erc721.test.ts",
     "test:erc1155": "hardhat test test/thirdweb/stylus-mintable-erc1155.test.ts",
