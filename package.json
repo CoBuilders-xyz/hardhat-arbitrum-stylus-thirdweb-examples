@@ -1,0 +1,33 @@
+{
+  "name": "hardhat-arbitrum-stylus-tests",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "compile": "hardhat arb:compile --stylus --host",
+    "compile:erc20": "hardhat arb:compile --stylus --host --contracts stylus-mintable-erc20",
+    "compile:erc721": "hardhat arb:compile --stylus --host --contracts stylus-mintable-erc721",
+    "deploy:erc20": "hardhat arb:deploy --host stylus-mintable-erc20",
+    "deploy:erc721": "hardhat arb:deploy --host stylus-mintable-erc721",
+    "test": "hardhat test",
+    "test:thirdweb": "hardhat test test/thirdweb",
+    "test:erc20": "hardhat test test/thirdweb/stylus-mintable-erc20.test.ts",
+    "test:erc721": "hardhat test test/thirdweb/stylus-mintable-erc721.test.ts"
+  },
+  "devDependencies": {
+    "@cobuilders/hardhat-arb-compile": "^0.0.1-alpha.16",
+    "@cobuilders/hardhat-arb-deploy": "^0.0.1-alpha.16",
+    "@cobuilders/hardhat-arb-node": "^0.0.1-alpha.20",
+    "@cobuilders/hardhat-arb-test": "^0.0.1-alpha.16",
+    "@cobuilders/hardhat-arbitrum-stylus": "^0.0.1-alpha.21",
+    "@nomicfoundation/hardhat-ignition": "^3.1.5",
+    "@nomicfoundation/hardhat-node-test-runner": "^3.0.15",
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.5",
+    "@nomicfoundation/hardhat-viem": "^3.0.7",
+    "@nomicfoundation/hardhat-viem-assertions": "^3.0.11",
+    "@types/node": "^22.19.19",
+    "forge-std": "github:foundry-rs/forge-std#v1.9.4",
+    "hardhat": "^3.4.5",
+    "typescript": "~5.8.0",
+    "viem": "^2.49.2"
+  }
+}
