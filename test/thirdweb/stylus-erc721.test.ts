@@ -5,7 +5,7 @@ import { network } from 'hardhat';
 const CONTRACT = 'stylus-erc721';
 
 describe('thirdweb / stylus-erc721-template', async function () {
-  const { stylusViem } = await network.connect();
+  const { stylusViem } = await network.create();
   const [wallet] = await stylusViem.getWalletClients();
 
   const contract = await stylusViem.deployContract(CONTRACT, [

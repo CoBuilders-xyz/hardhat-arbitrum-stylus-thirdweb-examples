@@ -7,7 +7,7 @@ const ERC721_INTERFACE_ID = '0x80ac58cd';
 const CONTRACT = 'stylus-transferable-erc721';
 
 describe('thirdweb / stylus-transferable-erc721', async function () {
-  const { stylusViem } = await network.connect();
+  const { stylusViem } = await network.create();
   const [wallet] = await stylusViem.getWalletClients();
   const other = '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' as const;
 

@@ -13,7 +13,7 @@ const ERC1155_INTERFACE_ID = '0xd9b67a26';
 const CONTRACT = 'stylus-mintable-erc1155';
 
 describe('thirdweb / stylus-mintable-erc1155', async function () {
-  const { stylusViem } = await network.connect();
+  const { stylusViem } = await network.create();
   const [wallet] = await stylusViem.getWalletClients();
 
   const contract = await stylusViem.deployContract(CONTRACT);

@@ -6,7 +6,7 @@ import { network } from 'hardhat';
 const CONTRACT = 'stylus-airdrop-erc20';
 
 describe('thirdweb / stylus-airdrop-erc20-template', async function () {
-  const { stylusViem } = await network.connect();
+  const { stylusViem } = await network.create();
   const [wallet] = await stylusViem.getWalletClients();
 
   const contract = await stylusViem.deployContract(CONTRACT, [

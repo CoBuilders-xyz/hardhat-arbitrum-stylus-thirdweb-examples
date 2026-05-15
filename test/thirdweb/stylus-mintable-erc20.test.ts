@@ -13,7 +13,7 @@ const ERC20_INTERFACE_ID = '0x36372b07';
 const CONTRACT = 'stylus-mintable-erc20';
 
 describe('thirdweb / stylus-mintable-erc20', async function () {
-  const { stylusViem } = await network.connect();
+  const { stylusViem } = await network.create();
   const [wallet] = await stylusViem.getWalletClients();
 
   const contract = await stylusViem.deployContract(CONTRACT);

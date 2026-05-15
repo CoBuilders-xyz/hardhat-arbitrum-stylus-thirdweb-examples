@@ -5,7 +5,7 @@ import { network } from 'hardhat';
 const CONTRACT = 'arkworks-bn254';
 
 describe('thirdweb / arkworks-bn254', async function () {
-  const { stylusViem } = await network.connect();
+  const { stylusViem } = await network.create();
 
   const contract = await stylusViem.deployContract(CONTRACT);
 
