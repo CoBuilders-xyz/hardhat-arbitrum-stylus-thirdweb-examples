@@ -13,7 +13,7 @@ Vendored sources live under `contracts/thirdweb/` (unchanged upstream). Tests de
 
 ## CI
 
-GitHub Actions runs `npm run test:all` on every push and pull request to `main` (Node 22, Rust 1.88/1.87, `cargo-stylus`, Docker for the nitro node).
+GitHub Actions runs `npm run compile:ci` then `npm run test:all` on every push and pull request to `main` (Node 22, Rust 1.88/1.87, `cargo-stylus`, Docker for the nitro node).
 
 ## Quick start
 

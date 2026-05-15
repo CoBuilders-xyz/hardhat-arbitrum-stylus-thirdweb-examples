@@ -39,10 +39,8 @@ jobs:
       - name: Install cargo-stylus
         run: cargo install cargo-stylus --locked
 
-      - name: Cache Rust build artifacts
-        uses: Swatinem/rust-cache@v2
-        with:
-          cache-all-crates: true
+      - name: Compile tested Stylus contracts
+        run: npm run compile:ci
 
       - name: Run all thirdweb integration tests
         run: npm run test:all

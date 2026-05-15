@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "compile": "hardhat arb:compile --stylus --host",
+    "compile:ci": "hardhat arb:compile --stylus --host --contracts stylus-mintable-erc20,stylus-mintable-erc721,stylus-mintable-erc1155,stylus-transferable-erc20,stylus-transferable-erc721,stylus-transferable-erc1155,stylus-erc20,stylus-erc721,stylus-erc1155,stylus-airdrop-erc20,arkworks-bn254,stylus-zk-erc20,stylus-zk-erc721",
     "compile:erc20": "hardhat arb:compile --stylus --host --contracts stylus-mintable-erc20",
     "compile:erc721": "hardhat arb:compile --stylus --host --contracts stylus-mintable-erc721",
     "compile:erc1155": "hardhat arb:compile --stylus --host --contracts stylus-mintable-erc1155",
