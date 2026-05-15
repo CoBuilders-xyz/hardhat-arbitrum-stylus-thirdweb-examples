@@ -1,6 +1,7 @@
 {
-  "name": "hardhat-arbitrum-stylus-tests",
+  "name": "hardhat-arbitrum-stylus-thirdweb-examples",
   "version": "1.0.0",
+  "description": "Hardhat integration tests for thirdweb Stylus examples using @cobuilders/hardhat-arbitrum-stylus",
   "type": "module",
   "scripts": {
     "compile": "hardhat arb:compile --stylus --host",
@@ -30,8 +31,8 @@
     "deploy:arkworks-bn254": "hardhat arb:deploy --host arkworks-bn254",
     "deploy:zk-erc20": "hardhat arb:deploy --host stylus-zk-erc20",
     "deploy:zk-erc721": "hardhat arb:deploy --host stylus-zk-erc721",
-    "test": "hardhat test",
-    "test:thirdweb": "hardhat test test/thirdweb/stylus-mintable-erc20.test.ts && hardhat test test/thirdweb/stylus-mintable-erc721.test.ts && hardhat test test/thirdweb/stylus-mintable-erc1155.test.ts && hardhat test test/thirdweb/stylus-transferable-erc20.test.ts && hardhat test test/thirdweb/stylus-transferable-erc721.test.ts && hardhat test test/thirdweb/stylus-transferable-erc1155.test.ts && hardhat test test/thirdweb/stylus-erc20.test.ts && hardhat test test/thirdweb/stylus-erc721.test.ts && hardhat test test/thirdweb/stylus-erc1155.test.ts && hardhat test test/thirdweb/stylus-airdrop-erc20.test.ts && hardhat test test/thirdweb/arkworks-bn254.test.ts && hardhat test test/thirdweb/stylus-zk-erc20.test.ts && hardhat test test/thirdweb/stylus-zk-erc721.test.ts",
+    "test": "npm run test:all",
+    "test:all": "hardhat test test/thirdweb/stylus-mintable-erc20.test.ts && hardhat test test/thirdweb/stylus-mintable-erc721.test.ts && hardhat test test/thirdweb/stylus-mintable-erc1155.test.ts && hardhat test test/thirdweb/stylus-transferable-erc20.test.ts && hardhat test test/thirdweb/stylus-transferable-erc721.test.ts && hardhat test test/thirdweb/stylus-transferable-erc1155.test.ts && hardhat test test/thirdweb/stylus-erc20.test.ts && hardhat test test/thirdweb/stylus-erc721.test.ts && hardhat test test/thirdweb/stylus-erc1155.test.ts && hardhat test test/thirdweb/stylus-airdrop-erc20.test.ts && hardhat test test/thirdweb/arkworks-bn254.test.ts && hardhat test test/thirdweb/stylus-zk-erc20.test.ts && hardhat test test/thirdweb/stylus-zk-erc721.test.ts",
     "test:erc20": "hardhat test test/thirdweb/stylus-mintable-erc20.test.ts",
     "test:erc721": "hardhat test test/thirdweb/stylus-mintable-erc721.test.ts",
     "test:erc1155": "hardhat test test/thirdweb/stylus-mintable-erc1155.test.ts",
@@ -58,7 +59,6 @@
     "@nomicfoundation/hardhat-viem": "^3.0.7",
     "@nomicfoundation/hardhat-viem-assertions": "^3.0.11",
     "@types/node": "^22.19.19",
-    "forge-std": "github:foundry-rs/forge-std#v1.9.4",
     "hardhat": "^3.4.5",
     "typescript": "~5.8.0",
     "viem": "^2.49.2"

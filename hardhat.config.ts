@@ -25,7 +25,7 @@ export default defineConfig({
       },
     },
   },
-  // Arbitrum Stylus plugin configuration (all values shown are defaults)
+  // @cobuilders/hardhat-arbitrum-stylus — host toolchain for thirdweb examples
   stylus: {
     node: {
       image: 'offchainlabs/nitro-node',
