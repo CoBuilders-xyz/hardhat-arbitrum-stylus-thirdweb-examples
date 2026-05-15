@@ -8,6 +8,7 @@ const CONTRACT = 'stylus-transferable-erc721';
 
 describe('thirdweb / stylus-transferable-erc721', async function () {
   const { stylusViem } = await network.create();
+  const publicClient = await stylusViem.getPublicClient();
   const [wallet] = await stylusViem.getWalletClients();
   const other = '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' as const;
 
@@ -18,7 +19,7 @@ describe('thirdweb / stylus-transferable-erc721', async function () {
   });
 
   it('returns ERC-721 transferable module metadata', async function () {
-    await assertModuleInterface(contract, ERC721_INTERFACE_ID, {
+    await assertModuleInterface(publicClient, contract, ERC721_INTERFACE_ID, {
       registerInstallationCallback: false,
     });
   });

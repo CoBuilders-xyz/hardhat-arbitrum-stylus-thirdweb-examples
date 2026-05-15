@@ -27,7 +27,7 @@ describe('thirdweb / stylus-mintable-erc1155', async function () {
   });
 
   it('returns ERC-1155 module metadata', async function () {
-    await assertModuleInterface(contract, ERC1155_INTERFACE_ID);
+    await assertModuleInterface(publicClient, contract, ERC1155_INTERFACE_ID);
   });
 
   it('exposes uninstall encoding and minter role checks', async function () {
